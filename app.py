@@ -232,7 +232,7 @@ def fallback_study_plan(weak_topics, accuracy):
 
 
 def call_groq(messages, temperature=0.3, max_tokens=500):
-    api_key = os.getenv("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", "").strip()
+    api_key = os.getenv("GROQ_API_KEY", "").strip()
     if not api_key:
         return None
     payload = json.dumps(
