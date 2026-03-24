@@ -1,0 +1,10 @@
+127.0.0.1 - - [23/Mar/2026 23:39:02] "GET /gesture_quiz.html HTTP/1.1" 200 -
+127.0.0.1 - - [23/Mar/2026 23:55:47] "GET /gesture_quiz.html HTTP/1.1" 200 -
+127.0.0.1 - - [23/Mar/2026 23:55:48] code 404, message File not found
+127.0.0.1 - - [23/Mar/2026 23:55:48] "GET /favicon.ico HTTP/1.1" 404 -
+192.168.1.9 - - [23/Mar/2026 23:56:42] "GET /gesture_quiz.html HTTP/1.1" 200 -
+192.168.1.9 - - [23/Mar/2026 23:56:53] code 404, message File not found
+192.168.1.9 - - [23/Mar/2026 23:56:53] "GET /favicon.ico HTTP/1.1" 404 -
+192.168.1.10 - - [24/Mar/2026 00:24:43] "GET /gesture_quiz.html?v=fix5 HTTP/1.1" 200 -
+192.168.1.10 - - [24/Mar/2026 00:24:44] code 404, message File not found
+192.168.1.10 - - [24/Mar/2026 00:24:44] "GET /favicon.ico HTTP/1.1" 404 -

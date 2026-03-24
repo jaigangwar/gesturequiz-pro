@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPS Hand Vision Pro</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;600;700&display=swap');
+
+    :root {
+      --bg: #030608;
+      --panel: #0a0f1a;
+      --border: #141f35;
+      --accent: #00f5d4;
+      --pink: #f72585;
+      --yellow: #ffbe0b;
+      --blue: #4361ee;
+      --text: #ddeeff;
+      --muted: #3a4a6a;
+      --win: #00f5d4;
+      --lose: #f72585;
+      --draw: #ffbe0b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 245, 212, 0.012) 2px, rgba(0, 245, 212, 0.012) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 245, 212, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 245, 212, 0.025) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 16px 20px 30px;
+    }
+
+    header {
+      text-align: center;
+      padding: 10px 0 16px;
+    }
+
+    .title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.5rem, 4vw, 2.6rem);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      background: linear-gradient(100deg, #00f5d4, #4361ee, #f72585);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.82rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    .scores {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 10px 0 16px;
+      flex-wrap: wrap;
+    }
+
+    .sc {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 26px;
+      text-align: center;
+      min-width: 90px;
+      transition: transform 0.3s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    .sc.pop {
+      animation: scorePop 0.4s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    @keyframes scorePop {
+      0% {
+        transform: scale(1)
+      }
+
+      50% {
+        transform: scale(1.35)
+      }
+
+      100% {
+        transform: scale(1)
+      }
+    }
+
+    .sc-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .sc-num {
+      font-family: 'Orbitron', monospace;
+      font-size: 2.2rem;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .sc.you {
+      border-color: var(--win);
+    }
+
+    .sc.you .sc-num {
+      color: var(--win);
+    }
+
+    .sc.ai-s {
+      border-color: var(--lose);
+    }
+
+    .sc.ai-s .sc-num {
+      color: var(--lose);
+    }
+
+    .sc.dr {
+      border-color: var(--draw);
+    }
+
+    .sc.dr .sc-num {
+      color: var(--draw);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media(max-width:680px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .ph {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .ph.pink {
+      color: var(--pink);
+    }
+
+    .blink {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: blink 1.8s infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.25
+      }
+    }
+
+    .cam-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #vid {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      display: block;
+    }
+
+    #cvs {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1);
+      pointer-events: none;
+    }
+
+    #cdOverlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(3, 6, 8, 0.82);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+      backdrop-filter: blur(4px);
+      z-index: 10;
+    }
+
+    #cdNum {
+      font-family: 'Orbitron', monospace;
+      font-size: 7rem;
+      font-weight: 900;
+      color: var(--accent);
+      text-shadow: 0 0 40px rgba(0, 245, 212, 0.8);
+      animation: cdPulse 0.7s ease-out;
+    }
+
+    @keyframes cdPulse {
+      0% {
+        transform: scale(1.6);
+        opacity: 0
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1
+      }
+    }
+
+    #cdLabel {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.9rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .gbadge {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(3, 6, 8, 0.88);
+      border: 1.5px solid var(--muted);
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--muted);
+      backdrop-filter: blur(10px);
+      transition: all 0.2s;
+      white-space: nowrap;
+      z-index: 5;
+    }
+
+    .gbadge.detected {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 16px rgba(0, 245, 212, 0.35);
+    }
+
+    .gbadge.locked {
+      border-color: var(--yellow);
+      color: var(--yellow);
+      box-shadow: 0 0 20px rgba(255, 190, 11, 0.4);
+    }
+
+    .conf-bar-wrap {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      z-index: 5;
+      display: none;
+    }
+
+    .conf-bar-track {
+      height: 5px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .conf-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.12s linear, background 0.3s;
+    }
+
+    /* Finger indicators overlay */
+    .finger-labels {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .fl {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(3, 6, 8, 0.75);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+
+    .fl.ext {
+      color: var(--accent);
+      background: rgba(0, 245, 212, 0.12);
+    }
+
+    .fl-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-strip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .sd {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+
+    .sd.on {
+      background: var(--accent);
+      animation: blink 1.5s infinite;
+    }
+
+    .ai-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      gap: 10px;
+      min-height: 220px;
+    }
+
+    .ai-vs {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .ai-emo {
+      font-size: 5.5rem;
+      line-height: 1;
+      transition: transform 0.35s cubic-bezier(.34, 1.56, .64, 1);
+      filter: drop-shadow(0 0 18px rgba(247, 37, 133, 0.5));
+    }
+
+    .ai-name {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--pink);
+      min-height: 1.8rem;
+      text-align: center;
+    }
+
+    .thinking-dots {
+      display: none;
+      gap: 6px;
+    }
+
+    .thinking-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--pink);
+      animation: bounce 1s infinite;
+    }
+
+    .thinking-dots span:nth-child(2) {
+      animation-delay: 0.15s
+    }
+
+    .thinking-dots span:nth-child(3) {
+      animation-delay: 0.3s
+    }
+
+    @keyframes bounce {
+
+      0%,
+      80%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.4
+      }
+
+      40% {
+        transform: translateY(-10px);
+        opacity: 1
+      }
+    }
+
+    .result-panel {
+      grid-column: 1/-1;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.4s;
+    }
+
+    .result-glow {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.5s;
+      pointer-events: none;
+    }
+
+    .battle-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 10px;
+    }
+
+    .battle-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .battle-emo {
+      font-size: 3rem;
+      line-height: 1;
+    }
+
+    .battle-who {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .battle-vs {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--muted);
+    }
+
+    .result-txt {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.3rem, 4vw, 2rem);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      transition: color 0.4s;
+    }
+
+    .result-sub {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 4px;
+      letter-spacing: 0.04em;
+    }
+
+    .streak {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin-top: 6px;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: all 0.4s;
+    }
+
+    .streak.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .streak.win-s {
+      background: rgba(0, 245, 212, 0.15);
+      color: var(--win);
+      border: 1px solid rgba(0, 245, 212, 0.3);
+    }
+
+    .streak.lose-s {
+      background: rgba(247, 37, 133, 0.15);
+      color: var(--lose);
+      border: 1px solid rgba(247, 37, 133, 0.3);
+    }
+
+    .ctrls {
+      grid-column: 1/-1;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 11px 26px;
+      border-radius: 10px;
+      border: 1.5px solid;
+      cursor: pointer;
+      background: transparent;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .btn-green {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-green:not(:disabled):hover {
+      box-shadow: 0 0 20px rgba(0, 245, 212, 0.4);
+      background: rgba(0, 245, 212, 0.07);
+    }
+
+    .btn-play {
+      border-color: var(--yellow);
+      color: var(--yellow);
+      font-size: 0.85rem;
+      padding: 13px 36px;
+    }
+
+    .btn-play:not(:disabled):hover {
+      box-shadow: 0 0 24px rgba(255, 190, 11, 0.4);
+      background: rgba(255, 190, 11, 0.07);
+    }
+
+    .btn-red {
+      border-color: var(--lose);
+      color: var(--lose);
+    }
+
+    .btn-red:hover {
+      background: rgba(247, 37, 133, 0.07);
+    }
+
+    .tips {
+      grid-column: 1/-1;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .tip {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s;
+    }
+
+    .tip.active-tip {
+      border-color: var(--accent);
+      color: var(--text);
+      background: rgba(0, 245, 212, 0.06);
+      transform: scale(1.04);
+    }
+
+    .tip strong {
+      color: var(--text);
+    }
+
+    .history {
+      grid-column: 1/-1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .hist-label {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .hist-bubbles {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      padding: 4px 0;
+      flex: 1;
+    }
+
+    .hist-bubbles::-webkit-scrollbar {
+      display: none;
+    }
+
+    .hb {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      animation: popIn 0.3s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    @keyframes popIn {
+      from {
+        transform: scale(0);
+        opacity: 0
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1
+      }
+    }
+
+    .hb.w {
+      background: rgba(0, 245, 212, 0.2);
+      border: 1px solid var(--win);
+    }
+
+    .hb.l {
+      background: rgba(247, 37, 133, 0.2);
+      border: 1px solid var(--lose);
+    }
+
+    .hb.d {
+      background: rgba(255, 190, 11, 0.2);
+      border: 1px solid var(--draw);
+    }
+
+    #ptcls {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    @keyframes floatUp {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0deg)
+      }
+
+      100% {
+        opacity: 0;
+        transform: translateY(-150px) scale(0.2) rotate(180deg)
+      }
+    }
+
+    #intro {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 5000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      transition: opacity 0.6s, visibility 0.6s;
+    }
+
+    #intro.hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .intro-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.8rem, 5vw, 3.5rem);
+      font-weight: 900;
+      text-align: center;
+      background: linear-gradient(135deg, var(--accent), var(--blue), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .intro-hand {
+      font-size: 5rem;
+      animation: wave 1.5s infinite;
+    }
+
+    @keyframes wave {
+
+      0%,
+      100% {
+        transform: rotate(-10deg)
+      }
+
+      50% {
+        transform: rotate(20deg)
+      }
+    }
+
+    .intro-sub {
+      color: var(--muted);
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      text-align: center;
+      max-width: 420px;
+      padding: 0 20px;
+    }
+
+    .btn-start-big {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 14px 40px;
+      border-radius: 12px;
+      border: 1.5px solid var(--accent);
+      color: var(--accent);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 10px;
+    }
+
+    .btn-start-big:hover {
+      background: var(--accent);
+      color: var(--bg);
+      box-shadow: 0 0 30px rgba(0, 245, 212, 0.5);
+    }
+
+    .kb-hint {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      grid-column: 1/-1;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="intro">
+    <div class="intro-hand">✋</div>
+    <div class="intro-title">HAND VISION<br>ROCK PAPER SCISSORS</div>
+    <div class="intro-sub">AI-powered real-time gesture detection using MediaPipe hand landmarks</div>
+    <button class="btn-start-big" onclick="beginGame()">🎮 START GAME</button>
+  </div>
+
+  <div id="ptcls"></div>
+
+  <div class="wrap">
+    <header>
+      <div class="title">✋ RPS Hand Vision Pro</div>
+      <div class="subtitle">Real-time Gesture AI · MediaPipe Powered</div>
+    </header>
+
+    <div class="scores">
+      <div class="sc you" id="scYou">
+        <div class="sc-label">You Win</div>
+        <div class="sc-num" id="numYou">0</div>
+      </div>
+      <div class="sc dr" id="scDr">
+        <div class="sc-label">Draw</div>
+        <div class="sc-num" id="numDr">0</div>
+      </div>
+      <div class="sc ai-s" id="scAi">
+        <div class="sc-label">AI Wins</div>
+        <div class="sc-num" id="numAi">0</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Camera -->
+      <div class="panel">
+        <div class="ph">
+          <div class="blink" id="camBlink" style="color:var(--muted)"></div>YOUR HAND
+        </div>
+        <div class="cam-box">
+          <video id="vid" autoplay muted playsinline></video>
+          <canvas id="cvs"></canvas>
+          <div class="conf-bar-wrap" id="confWrap">
+            <div class="conf-bar-track">
+              <div class="conf-bar-fill" id="confFill"></div>
+            </div>
+          </div>
+          <div class="finger-labels" id="fingerLabels" style="display:none">
+            <div class="fl" id="fl-index">
+              <div class="fl-dot"></div>INDEX
+            </div>
+            <div class="fl" id="fl-middle">
+              <div class="fl-dot"></div>MIDDLE
+            </div>
+            <div class="fl" id="fl-ring">
+              <div class="fl-dot"></div>RING
+            </div>
+            <div class="fl" id="fl-pinky">
+              <div class="fl-dot"></div>PINKY
+            </div>
+          </div>
+          <div class="gbadge" id="gbadge"><span id="gbText">Camera not started</span></div>
+          <div id="cdOverlay">
+            <div id="cdNum">3</div>
+            <div id="cdLabel">GET READY!</div>
+          </div>
+        </div>
+        <div class="status-strip">
+          <div class="sd" id="sd"></div><span id="stText">Click START CAMERA to begin</span>
+        </div>
+      </div>
+
+      <!-- AI -->
+      <div class="panel">
+        <div class="ph pink">
+          <div class="blink" style="color:var(--pink)"></div>AI OPPONENT
+        </div>
+        <div class="ai-body">
+          <div class="ai-vs">AI chose</div>
+          <div class="ai-emo" id="aiEmo">🤖</div>
+          <div class="thinking-dots" id="thinkDots"><span></span><span></span><span></span></div>
+          <div class="ai-name" id="aiName">Waiting...</div>
+        </div>
+      </div>
+
+      <!-- Result -->
+      <div class="result-panel" id="resPanel">
+        <div class="result-glow" id="resGlow"></div>
+        <div class="battle-row" id="battleRow" style="display:none">
+          <div class="battle-side">
+            <div class="battle-emo" id="bYouEmo">✊</div>
+            <div class="battle-who">You</div>
+          </div>
+          <div class="battle-vs">VS</div>
+          <div class="battle-side">
+            <div class="battle-emo" id="bAiEmo">🤖</div>
+            <div class="battle-who">AI</div>
+          </div>
+        </div>
+        <div class="result-txt" id="resTxt">SHOW YOUR HAND · PRESS PLAY!</div>
+        <div class="result-sub" id="resSub">Start camera and show a gesture clearly</div>
+        <div class="streak" id="streak"></div>
+      </div>
+
+      <!-- Controls -->
+      <div class="ctrls">
+        <button class="btn btn-green" id="btnCam" onclick="startCam()">📷 Start Camera</button>
+        <button class="btn btn-play" id="btnPlay" onclick="startRound()" disabled>▶ PLAY ROUND</button>
+        <button class="btn btn-red" onclick="resetAll()">↺ Reset</button>
+      </div>
+
+      <!-- Tips -->
+      <div class="tips" id="tipsRow">
+        <div class="tip" id="tipRock">✊ <span><strong>Rock</strong> — All fingers closed</span></div>
+        <div class="tip" id="tipPaper">✋ <span><strong>Paper</strong> — All 5 open flat</span></div>
+        <div class="tip" id="tipScissors">✌️ <span><strong>Scissors</strong> — Index + Middle only</span></div>
+      </div>
+
+      <div class="kb-hint">⌨ Press SPACE to play a round</div>
+
+      <!-- History -->
+      <div class="history">
+        <div class="hist-label">History:</div>
+        <div class="hist-bubbles" id="histBubs"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.js"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"
+    crossorigin="anonymous"></script>
+  <script>
+    const S = {
+      scores: { win: 0, draw: 0, lose: 0 },
+      streak: 0, streakType: null,
+      camOn: false, rounding: false,
+      gesture: 'none', confidence: 0,
+      history: [],
+      gBuffer: [], BUFFER: 8,
+      fingerExt: [false, false, false, false]
+    };
+
+    const GESTURES = ['rock', 'paper', 'scissors'];
+    const EMO = { rock: '✊', paper: '✋', scissors: '✌️', none: '🤖' };
+    const NAME = { rock: 'ROCK', paper: 'PAPER', scissors: 'SCISSORS', none: '—' };
+    const FINGER_COLORS = ['#f72585', '#ffbe0b', '#00f5d4', '#4361ee', '#7209b7'];
+
+    const vid = document.getElementById('vid');
+    const cvs = document.getElementById('cvs');
+    const ctx = cvs.getContext('2d');
+    const gbadge = document.getElementById('gbadge');
+    const gbText = document.getElementById('gbText');
+    const cdOverlay = document.getElementById('cdOverlay');
+    const cdNum = document.getElementById('cdNum');
+    const aiEmo = document.getElementById('aiEmo');
+    const aiName = document.getElementById('aiName');
+    const thinkDots = document.getElementById('thinkDots');
+    const resTxt = document.getElementById('resTxt');
+    const resSub = document.getElementById('resSub');
+    const resGlow = document.getElementById('resGlow');
+    const resPanel = document.getElementById('resPanel');
+    const battleRow = document.getElementById('battleRow');
+    const bYouEmo = document.getElementById('bYouEmo');
+    const bAiEmo = document.getElementById('bAiEmo');
+    const streakEl = document.getElementById('streak');
+    const confFill = document.getElementById('confFill');
+    const confWrap = document.getElementById('confWrap');
+    const sd = document.getElementById('sd');
+    const stText = document.getElementById('stText');
+    const btnPlay = document.getElementById('btnPlay');
+    const btnCam = document.getElementById('btnCam');
+    const histBubs = document.getElementById('histBubs');
+    const fingerLabels = document.getElementById('fingerLabels');
+
+    // ── ACCURATE Gesture Detection ──────────────────────
+    // Uses pip (proximal interphalangeal) vs tip Y comparison
+    // Also uses curl ratio for better rock detection
+
+    function dist(a, b) { return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2); }
+
+    function isFingerUp(lm, tipIdx, dipIdx, pipIdx, mcpIdx) {
+      // Tip must be above (lower y) than PIP significantly
+      const tipY = lm[tipIdx].y;
+      const pipY = lm[pipIdx].y;
+      const mcpY = lm[mcpIdx].y;
+      // Primary: tip above pip
+      const abovePip = tipY < pipY - 0.015;
+      // Secondary: tip above mcp (less strict)
+      const aboveMcp = tipY < mcpY + 0.01;
+      return abovePip && aboveMcp;
+    }
+
+    function isThumbUp(lm) {
+      // Thumb extends sideways — check tip vs IP vs MCP in X axis
+      const tip = lm[4];
+      const ip = lm[3];
+      const mcp = lm[2];
+      const indexMcp = lm[5];
+      // Thumb is "open" if tip is far from index MCP
+      const d = dist(tip, indexMcp);
+      return d > 0.08;
+    }
+
+    function classifyGesture(lm) {
+      const index = isFingerUp(lm, 8, 7, 6, 5);
+      const middle = isFingerUp(lm, 12, 11, 10, 9);
+      const ring = isFingerUp(lm, 16, 15, 14, 13);
+      const pinky = isFingerUp(lm, 20, 19, 18, 17);
+      const thumb = isThumbUp(lm);
+
+      S.fingerExt = [index, middle, ring, pinky];
+      const count = [index, middle, ring, pinky].filter(Boolean).length;
+      const total = count + (thumb ? 1 : 0);
+
+      // SCISSORS: index + middle only (ring and pinky must be closed)
+      // Also check V-spread: tips apart
+      const vSpread = dist(lm[8], lm[12]) > 0.05;
+      if (index && middle && !ring && !pinky) {
+        const conf = 0.55 + (vSpread ? 0.25 : 0) + (!thumb ? 0.1 : 0) + (count === 2 ? 0.1 : 0);
+        return { gesture: 'scissors', confidence: Math.min(conf, 1) };
+      }
+
+      // PAPER: 4 fingers up (ring or pinky must be up)
+      if (count >= 3) {
+        const conf = 0.5 + (count / 4) * 0.25 + (total >= 5 ? 0.15 : 0) + (ring || pinky ? 0.1 : 0);
+        return { gesture: 'paper', confidence: Math.min(conf, 1) };
+      }
+
+      // ROCK: all closed (0 or 1 finger max)
+      if (count <= 1) {
+        // Extra check: fingertips curl towards palm
+        const palmCenter = lm[9];
+        const tipsClosed = [8, 12, 16, 20].every(i => lm[i].y > lm[i - 2].y - 0.01);
+        const conf = 0.5 + (count === 0 ? 0.3 : 0.1) + (tipsClosed ? 0.2 : 0);
+        return { gesture: 'rock', confidence: Math.min(conf, 1) };
+      }
+
+      // Ambiguous — fallback
+      if (count === 2 && index && !middle) return { gesture: 'scissors', confidence: 0.3 };
+      return { gesture: 'rock', confidence: 0.3 };
+    }
+
+    // Smoothing with majority-vote buffer
+    function smoothedGesture(raw) {
+      S.gBuffer.push(raw.gesture);
+      if (S.gBuffer.length > S.BUFFER) S.gBuffer.shift();
+      const counts = {};
+      for (const g of S.gBuffer) counts[g] = (counts[g] || 0) + 1;
+      let best = raw.gesture, bestC = 0;
+      for (const [g, c] of Object.entries(counts)) { if (c > bestC) { best = g; bestC = c; } }
+      const consistency = bestC / S.gBuffer.length;
+      return { gesture: best, confidence: raw.confidence * 0.55 + consistency * 0.45 };
+    }
+
+    // ── MediaPipe ─────────────────────────────────────────
+    const hands = new Hands({
+      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${f}`
+    });
+    hands.setOptions({
+      maxNumHands: 1, modelComplexity: 1,
+      minDetectionConfidence: 0.72, minTrackingConfidence: 0.65
+    });
+    hands.onResults(onResults);
+
+    function onResults(results) {
+      cvs.width = vid.videoWidth || cvs.offsetWidth;
+      cvs.height = vid.videoHeight || cvs.offsetHeight;
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const lm = results.multiHandLandmarks[0];
+
+        // Draw connections with gradient effect
+        drawConnectors(ctx, lm, HAND_CONNECTIONS, { color: 'rgba(0,245,212,0.45)', lineWidth: 2.5 });
+
+        // Draw landmarks — finger-color-coded
+        const groups = [[0, 1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16], [17, 18, 19, 20]];
+        groups.forEach((grp, fi) => {
+          grp.forEach(i => {
+            const p = lm[i];
+            const x = p.x * cvs.width, y = p.y * cvs.height;
+            const isTip = [4, 8, 12, 16, 20].includes(i);
+            const r = isTip ? 7 : 4;
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fillStyle = FINGER_COLORS[fi]; ctx.fill();
+            if (isTip) {
+              ctx.beginPath(); ctx.arc(x, y, r + 4, 0, Math.PI * 2);
+              ctx.strokeStyle = FINGER_COLORS[fi] + '50';
+              ctx.lineWidth = 2; ctx.stroke();
+            }
+          });
+        });
+
+        // Draw wrist label
+        const wx = lm[0].x * cvs.width, wy = lm[0].y * cvs.height;
+        ctx.font = 'bold 11px Orbitron,monospace';
+        ctx.fillStyle = 'rgba(0,245,212,0.7)';
+        ctx.textAlign = 'center';
+        ctx.fillText('WRIST', wx, wy + 18);
+
+        const raw = classifyGesture(lm);
+        const stable = smoothedGesture(raw);
+        S.gesture = stable.gesture;
+        S.confidence = stable.confidence;
+
+        const pct = Math.round(stable.confidence * 100);
+        gbText.textContent = `${EMO[stable.gesture]}  ${NAME[stable.gesture]}  ${pct}%`;
+        gbadge.className = 'gbadge ' + (pct >= 68 ? 'detected' : '');
+
+        confWrap.style.display = 'block';
+        confFill.style.width = pct + '%';
+        confFill.style.background = pct >= 68 ? 'var(--accent)' : pct >= 45 ? 'var(--yellow)' : 'var(--lose)';
+
+        // Finger indicator labels
+        fingerLabels.style.display = 'flex';
+        const fls = [document.getElementById('fl-index'), document.getElementById('fl-middle'), document.getElementById('fl-ring'), document.getElementById('fl-pinky')];
+        S.fingerExt.forEach((ext, i) => { fls[i].className = 'fl' + (ext ? ' ext' : ''); });
+
+        // Tip highlights
+        ['Rock', 'Paper', 'Scissors'].forEach(g => {
+          document.getElementById('tip' + g).className = 'tip' + (stable.gesture === g.toLowerCase() ? ' active-tip' : '');
+        });
+
+      } else {
+        S.gesture = 'none'; S.confidence = 0; S.gBuffer = [];
+        S.fingerExt = [false, false, false, false];
+        gbText.textContent = 'No hand — show hand to camera';
+        gbadge.className = 'gbadge';
+        confWrap.style.display = 'none';
+        fingerLabels.style.display = 'none';
+        ['Rock', 'Paper', 'Scissors'].forEach(g => { document.getElementById('tip' + g).className = 'tip'; });
+      }
+    }
+
+    // ── Start Camera ──────────────────────────────────────
+    async function startCam() {
+      if (S.camOn) return;
+      btnCam.disabled = true;
+      btnCam.textContent = '⏳ Loading AI...';
+      stText.textContent = 'Loading MediaPipe + requesting camera...';
+      try {
+        const mpCam = new Camera(vid, {
+          onFrame: async () => { await hands.send({ image: vid }); },
+          width: 640, height: 480
+        });
+        await mpCam.start();
+        S.camOn = true;
+        btnCam.textContent = '✅ Camera Active';
+        sd.classList.add('on');
+        stText.textContent = 'Detection running — show gesture clearly!';
+        document.getElementById('camBlink').style.color = 'var(--accent)';
+        btnPlay.disabled = false;
+        resTxt.textContent = 'READY TO PLAY!';
+        resTxt.style.color = 'var(--text)';
+        resSub.textContent = 'Show a clear gesture then hit PLAY ROUND (or press SPACE)';
+      } catch (e) {
+        stText.textContent = '❌ Camera denied — allow access in browser and reload';
+        btnCam.disabled = false; btnCam.textContent = '📷 Start Camera';
+      }
+    }
+
+    // ── Round ─────────────────────────────────────────────
+    function startRound() {
+      if (S.rounding || !S.camOn) return;
+      S.rounding = true; btnPlay.disabled = true;
+      battleRow.style.display = 'none'; streakEl.classList.remove('show');
+
+      cdOverlay.style.display = 'flex';
+      let n = 3; cdNum.textContent = n;
+      document.getElementById('cdLabel').textContent = 'GET READY!';
+
+      const tick = setInterval(() => {
+        n--;
+        if (n > 0) {
+          cdNum.textContent = n;
+          cdNum.style.animation = 'none'; void cdNum.offsetWidth;
+          cdNum.style.animation = 'cdPulse 0.7s ease-out';
+        } else if (n === 0) {
+          cdNum.textContent = '✊'; document.getElementById('cdLabel').textContent = 'SHOOT!';
+        } else {
+          clearInterval(tick);
+          cdOverlay.style.display = 'none';
+          document.getElementById('cdLabel').textContent = 'GET READY!';
+          resolveRound();
+        }
+      }, 750);
+    }
+
+    function resolveRound() {
+      const player = S.gesture;
+      if (player === 'none' || S.confidence < 0.38) {
+        resTxt.textContent = '❌ GESTURE NOT DETECTED!';
+        resTxt.style.color = 'var(--yellow)';
+        resSub.textContent = 'Hold your hand steady, ensure good lighting, and try again';
+        resPanel.style.borderColor = 'var(--yellow)';
+        resGlow.style.background = 'rgba(255,190,11,0.1)'; resGlow.style.opacity = '1';
+        setTimeout(() => resGlow.style.opacity = '0', 1500);
+        S.rounding = false; btnPlay.disabled = false; return;
+      }
+
+      const ai = GESTURES[Math.floor(Math.random() * 3)];
+
+      // AI thinking anim
+      aiEmo.style.transform = 'scale(0) rotate(-20deg)';
+      aiName.textContent = ''; thinkDots.style.display = 'flex';
+      setTimeout(() => {
+        thinkDots.style.display = 'none';
+        aiEmo.textContent = EMO[ai];
+        aiEmo.style.transform = 'scale(1.3) rotate(5deg)';
+        aiName.textContent = NAME[ai];
+        setTimeout(() => { aiEmo.style.transform = 'scale(1) rotate(0deg)'; }, 200);
+      }, 450);
+
+      let outcome;
+      if (player === ai) outcome = 'draw';
+      else if ((player === 'rock' && ai === 'scissors') || (player === 'paper' && ai === 'rock') || (player === 'scissors' && ai === 'paper')) outcome = 'win';
+      else outcome = 'lose';
+
+      if (outcome === 'win') { S.scores.win++; S.streak = S.streakType === 'win' ? S.streak + 1 : 1; S.streakType = 'win'; }
+      else if (outcome === 'lose') { S.scores.lose++; S.streak = S.streakType === 'lose' ? S.streak + 1 : 1; S.streakType = 'lose'; }
+      else { S.streak = 0; S.streakType = null; }
+
+      updateScores();
+      showResult(outcome, player, ai);
+      addHistory(outcome, player);
+      spawnParticles(outcome);
+      setTimeout(() => { S.rounding = false; btnPlay.disabled = false; }, 1000);
+    }
+
+    function showResult(outcome, player, ai) {
+      const cfg = {
+        win: { txt: '🏆 YOU WIN!', color: 'var(--win)', glow: 'rgba(0,245,212,0.12)', border: 'var(--win)' },
+        lose: { txt: '💀 AI WINS!', color: 'var(--lose)', glow: 'rgba(247,37,133,0.12)', border: 'var(--lose)' },
+        draw: { txt: '🤝 DRAW!', color: 'var(--draw)', glow: 'rgba(255,190,11,0.12)', border: 'var(--draw)' },
+      };
+      const c = cfg[outcome];
+      resTxt.textContent = c.txt; resTxt.style.color = c.color;
+      resPanel.style.borderColor = c.border;
+      resGlow.style.background = c.glow; resGlow.style.opacity = '1';
+      setTimeout(() => resGlow.style.opacity = '0', 2200);
+
+      const ruleMap = {
+        win: `${EMO[player]} ${NAME[player]} beats ${EMO[ai]} ${NAME[ai]}`,
+        lose: `${EMO[ai]} ${NAME[ai]} beats ${EMO[player]} ${NAME[player]}`,
+        draw: `Both chose ${EMO[player]} ${NAME[player]}`
+      };
+      resSub.textContent = ruleMap[outcome];
+      bYouEmo.textContent = EMO[player]; bAiEmo.textContent = EMO[ai];
+      battleRow.style.display = 'flex';
+
+      if (S.streak >= 2 && S.streakType) {
+        const isW = S.streakType === 'win';
+        streakEl.textContent = `🔥 ${S.streak}x ${isW ? 'WIN' : 'LOSE'} STREAK!`;
+        streakEl.className = `streak ${isW ? 'win-s' : 'lose-s'} show`;
+      } else { streakEl.className = 'streak'; }
+
+      const ids = { win: 'scYou', draw: 'scDr', lose: 'scAi' };
+      const el = document.getElementById(ids[outcome]);
+      el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+    }
+
+    function updateScores() {
+      document.getElementById('numYou').textContent = S.scores.win;
+      document.getElementById('numDr').textContent = S.scores.draw;
+      document.getElementById('numAi').textContent = S.scores.lose;
+    }
+
+    function addHistory(outcome, player) {
+      S.history.unshift({ outcome, player });
+      if (S.history.length > 20) S.history.pop();
+      histBubs.innerHTML = '';
+      S.history.slice(0, 16).forEach(h => {
+        const div = document.createElement('div');
+        div.className = `hb ${h.outcome === 'win' ? 'w' : h.outcome === 'lose' ? 'l' : 'd'}`;
+        div.title = `${NAME[h.player]} — ${h.outcome}`;
+        div.textContent = EMO[h.player];
+        histBubs.appendChild(div);
+      });
+    }
+
+    function resetAll() {
+      S.scores = { win: 0, draw: 0, lose: 0 }; S.streak = 0; S.streakType = null; S.history = [];
+      updateScores();
+      resTxt.textContent = 'SCORES RESET!'; resTxt.style.color = 'var(--text)';
+      resSub.textContent = 'Fresh game — good luck!'; resPanel.style.borderColor = 'var(--border)';
+      battleRow.style.display = 'none'; streakEl.className = 'streak';
+      aiEmo.textContent = '🤖'; aiName.textContent = 'Waiting...';
+      histBubs.innerHTML = '';
+    }
+
+    function spawnParticles(outcome) {
+      const cols = { win: ['#00f5d4', '#7fffd4', '#00d4b4'], lose: ['#f72585', '#ff6b9d', '#c1121f'], draw: ['#ffbe0b', '#ffd166', '#fff'] };
+      const shapes = ['●', '★', '✦', '◆', '▲'];
+      const c = cols[outcome]; const ptcls = document.getElementById('ptcls');
+      for (let i = 0; i < 24; i++) {
+        setTimeout(() => {
+          const p = document.createElement('div');
+          const sz = 8 + Math.random() * 12;
+          p.style.cssText = `position:fixed;font-size:${sz}px;color:${c[Math.floor(Math.random() * c.length)]};left:${10 + Math.random() * 80}%;bottom:${15 + Math.random() * 35}%;pointer-events:none;animation:floatUp ${0.6 + Math.random() * 1}s ease-out forwards;z-index:1000;text-shadow:0 0 8px currentColor;`;
+          p.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+          ptcls.appendChild(p); setTimeout(() => p.remove(), 1700);
+        }, i * 30);
+      }
+    }
+
+    function beginGame() { document.getElementById('intro').classList.add('hide'); }
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space' && !btnPlay.disabled && S.camOn) { e.preventDefault(); startRound(); }
+    });
+  </script>
+</body>
+
+</html>
