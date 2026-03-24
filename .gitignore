@@ -22,3 +22,5 @@ frontend.err.log
 gesturequiz.db
 
 .vscode/
+.env
+*.log
